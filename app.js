@@ -9,86 +9,46 @@
 // pueda leerse, evitar que el programa termine abruptamente si un archivo individual produce un error durante la lectura
 //  de sus metadatos, y finalmente imprimir en consola la lista resultante con una línea por cada elemento encontrado en el directorio.
 
-// SOLUCIÓN # 1
 
-const fs = require("node:fs/promises");
-const path = require("node:path");
+import fs from "node:fs/promises";
+import path from "node:path";
 
 const folder = process.argv[2] ?? ".";
 
-async function comandLs(nameDir) {
+async function commandLs(folderName) {
   try {
-    const entries = await fs.readdir(nameDir, { withFileTypes: true });
+    // UN ARRAY DE OBJETOS Dirent con cada detalle --> [ Dirent {}, Dirent {}, ...]
+    const entries = await fs.readdir(folderName, { withFileTypes: true });
     const results = await Promise.all(
       entries.map(async (file) => {
-        const filePath = path.join(nameDir, file.name);
+        const filePath = path.join(folderName, file.name);
         let stats;
         try {
           stats = await fs.stat(filePath);
         } catch (err) {
           console.error(
-            `No se puede leer el fichero: ${file.name}:${err.message}`,
+            `El fichero no se puede leer: ${file.name} ${err.message}`,
           );
           return null;
         }
 
-        const typeFile = file.isDirectory() ? "D" : "F";
+        const fileType = file.isDirectory() ? "d" : "f";
         const size = stats.size.toString().padStart(10);
         const modified = stats.mtime.toLocaleString();
 
-        return `${typeFile} ${file.name.padEnd(20)} ${size} ${modified}`;
+        return `${fileType} ${file.name.padEnd(20)} ${size} ${modified}`;
       }),
     );
 
-    results.filter(Boolean).forEach((line) => console.log(line));
+    return results.filter(Boolean).forEach((line) => console.log(line));
   } catch (err) {
-    console.error(`No se puede leer el directorio: ${nameDir}`);
+    console.error(
+      `El directorio no se puede leer: ${folderName} ${err.message}`,
+    );
     process.exit(1);
   }
 }
 
-comandLs(folder);
 
-// SOLUCIÓN # 2
+commandLs(folder);
 
-// const fs = require("node:fs/promises");
-// const path = require("node:path");
-
-// const folder = process.argv[2] ?? ".";
-
-// async function comandoLs(nameFolder) {
-//   let files;
-//   try {
-//     // RETORNA UN ARRAY CON TODOS LOS FICHEROS QUE ESTÁN DENTRO DEL DIRECTORIO
-//     files = await fs.readdir(nameFolder);
-//   } catch {
-//     console.error(`No se puedo leer el directorio: , ${nameFolder}`);
-//     process.exit(1);
-//   }
-
-//   const filePromises = files.map(async (file) => {
-//     // Muestra el nombre del directorio y el nombre del fichero
-//     const filePath = path.join(folder, file);
-//     let stats;
-//     try {
-//       stats = await fs.stat(filePath);
-//     } catch {
-//       console.error(`No se puede leer el archivo: ${filePath}`);
-//       process.exit(1);
-//     }
-//     const isDirectory = stats.isDirectory();
-//     const fileType = isDirectory ? "D" : "F";
-//     const fileSize = stats.size;
-//     const fileModified = stats.mtime.toLocaleString();
-
-//     return `${fileType} ${file.padEnd(20)} ${fileSize.toString().padStart(10)} ${fileModified}`;
-//   });
-
-//   const filesInfo = await Promise.all(filePromises);
-
-//   filesInfo.forEach((file) => {
-//     console.log(file);
-//   });
-// }
-
-// comandoLs(folder);
